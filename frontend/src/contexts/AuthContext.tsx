@@ -1,12 +1,12 @@
-import { useState, useEffect, createContext, useContext, ReactNode } from 'react';
+import { useState, useEffect, createContext, useContext, type ReactNode } from 'react';
 import api from '../lib/api';
-import { User } from '../types';
+import type { User } from '../types';
 
 interface AuthContextType {
     user: User | null;
     loading: boolean;
     login: (email: string, password: string) => Promise<void>;
-    register: (email: string, password: string, fullName?: string, company?: string) => Promise<void>;
+    register: (email: string, password: string, fullName?: string, company?: string, role?: string) => Promise<void>;
     logout: () => void;
 }
 
@@ -41,13 +41,15 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         email: string,
         password: string,
         fullName?: string,
-        company?: string
+        company?: string,
+        role?: string
     ) => {
         const response = await api.post('/api/auth/register', {
             email,
             password,
             full_name: fullName,
             company,
+            role,
         });
         const { access_token, user: userData } = response.data;
 

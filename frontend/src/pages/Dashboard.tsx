@@ -1,11 +1,19 @@
+import { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
-import api from '../lib/api';
-import { PortfolioSummary, RiskHeatmapItem, Alert } from '../types';
 import { Link } from 'react-router-dom';
-import { formatRelativeTime, getStatusColor, getSeverityColor } from '../lib/utils';
-import { Bell, TrendingUp, AlertTriangle, CheckCircle2 } from 'lucide-react';
+import api from '../lib/api';
+import type { PortfolioSummary, Alert, RiskHeatmapItem } from '../types';
+import { getSeverityColor } from '../lib/dashboard-utils';
+import Layout from '../components/layout/Layout';
+import { MetricCard, Card } from '../components/ui/Card';
+import { Button } from '../components/ui/Button';
+import { Plus, TrendingUp, TrendingDown, FileText } from 'lucide-react';
+import { formatCurrency } from '../lib/utils';
+import { LoanUploadModal } from '../components/loans/LoanUploadModal';
 
 export default function Dashboard() {
+    const [isUploadModalOpen, setIsUploadModalOpen] = useState(false);
+
     // Fetch portfolio summary
     const { data: summary } = useQuery<PortfolioSummary>({
         queryKey: ['portfolio-summary'],
@@ -15,8 +23,8 @@ export default function Dashboard() {
         },
     });
 
-    // Fetch risk heatmap
-    const { data: heatmap } = useQuery<RiskHeatmapItem[]>({
+    // Fetch heatmap data
+    const { data: heatmap, isLoading: loadingHeatmap } = useQuery<RiskHeatmapItem[]>({
         queryKey: ['risk-heatmap'],
         queryFn: async () => {
             const res = await api.get('/api/analytics/risk-heatmap');
@@ -25,7 +33,7 @@ export default function Dashboard() {
     });
 
     // Fetch critical alerts
-    const { data: alerts } = useQuery<Alert[]>({
+    const { data: alerts, isLoading: loadingAlerts } = useQuery<Alert[]>({
         queryKey: ['critical-alerts'],
         queryFn: async () => {
             const res = await api.get('/api/analytics/critical-alerts');
@@ -33,138 +41,208 @@ export default function Dashboard() {
         },
     });
 
-    const portfolioHealth = summary ?
-        Math.round((summary.compliant_covenants / Math.max(summary.total_covenants, 1)) * 100) : 0;
+    const portfolioHealth = summary ? (summary.compliant_covenants / summary.total_covenants) * 100 : 0;
+
+    // Mock chart data - replace with real data
+    const chartMonths = ['Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec', 'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul'];
+    const currentData = [120, 150, 380, 420, 350, 280, 480, 420, 520, 680, 750, 880, 960];
+    const lastData = [80, 100, 220, 280, 240, 180, 320, 280, 360, 480, 520, 620, 680];
 
     return (
-        <div className="min-h-screen bg-gray-50">
-            {/* Header */}
-            <header className="bg-white border-b border-gray-200">
-                <div className="max-w-7xl mx-auto px-6 py-4 flex justify-between items-center">
-                    <h1 className="text-2xl font-bold text-black">Covenant Compass</h1>
-                    <div className="flex items-center gap-4">
-                        <Link to="/alerts" className="relative">
-                            <Bell className="w-6 h-6 text-gray-600 hover:text-black" />
-                            {summary && summary.unread_alerts > 0 && (
-                                <span className="absolute -top-2 -right-2 bg-status-danger text-white text-xs rounded-full w-5 h-5 flex items-center justify-center font-semibold">
-                                    {summary.unread_alerts}
-                                </span>
-                            )}
-                        </Link>
+        <Layout
+            title="Total Portfolio Value"
+            actions={
+                <div className="flex items-center gap-3">
+                    <select className="px-3 py-2 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-1 focus:ring-black">
+                        <option>Jan 1 '26 - Jan 8 '26</option>
+                        <option>Dec '25</option>
+                        <option>2025</option>
+                        <option>All Time</option>
+                    </select>
+                    <Button size="sm" onClick={() => setIsUploadModalOpen(true)}>
+                        <Plus className="w-4 h-4 mr-1.5" />
+                        Add Loan
+                    </Button>
+                </div>
+            }
+        >
+            {/* Main Metric */}
+            <div className="mb-8">
+                <div className="flex items-baseline gap-3 mb-2">
+                    <h2 className="text-4xl font-bold text-black">
+                        {formatCurrency((summary?.total_loans || 0) * 1000000)}
+                    </h2>
+                    <span className="text-sm text-gray-500">
+                        vs {formatCurrency((summary?.total_loans || 0) * 900000)} last period
+                    </span>
+                </div>
+                <div className="flex items-center gap-2 text-sm">
+                    <span className="flex items-center gap-1 px-2 py-0.5 bg-gray-100 rounded-full">
+                        <span className="w-2 h-2 bg-black rounded-full"></span>
+                        Current Period
+                    </span>
+                    <span className="flex items-center gap-1 px-2 py-0.5 bg-gray-100 rounded-full">
+                        <span className="w-2 h-2 bg-gray-400 rounded-full"></span>
+                        Last Period
+                    </span>
+                </div>
+            </div>
+
+            {/* Chart */}
+            <Card className="mb-6 p-0 overflow-hidden">
+                <div className="p-6 pb-0">
+                    <div className="h-64 relative">
+                        {/* Y-axis labels */}
+                        <div className="absolute left-0 top-0 bottom-8 flex flex-col justify-between text-xs text-gray-400">
+                            <span>6000</span>
+                            <span>4500</span>
+                            <span>3000</span>
+                            <span>1500</span>
+                            <span>0</span>
+                        </div>
+
+                        {/* Chart area */}
+                        <div className="ml-12 h-full relative">
+                            <svg className="w-full h-full" viewBox="0 0 800 240" preserveAspectRatio="none">
+                                {/* Grid lines */}
+                                <line x1="0" y1="0" x2="800" y2="0" stroke="#E5E5E5" strokeWidth="1" />
+                                <line x1="0" y1="60" x2="800" y2="60" stroke="#E5E5E5" strokeWidth="1" />
+                                <line x1="0" y1="120" x2="800" y2="120" stroke="#E5E5E5" strokeWidth="1" />
+                                <line x1="0" y1="180" x2="800" y2="180" stroke="#E5E5E5" strokeWidth="1" />
+
+                                {/* Last period line (gray) */}
+                                <polyline
+                                    points={lastData.map((val, i) => `${(i / (lastData.length - 1)) * 800},${240 - (val / 1000) * 240}`).join(' ')}
+                                    fill="none"
+                                    stroke="#D4D4D4"
+                                    strokeWidth="2"
+                                />
+
+                                {/* Current period line (black) */}
+                                <polyline
+                                    points={currentData.map((val, i) => `${(i / (currentData.length - 1)) * 800},${240 - (val / 1000) * 240}`).join(' ')}
+                                    fill="none"
+                                    stroke="#000000"
+                                    strokeWidth="2.5"
+                                />
+                            </svg>
+                        </div>
+                    </div>
+
+                    {/* X-axis labels */}
+                    <div className="flex justify-between text-xs text-gray-400 mt-2 ml-12">
+                        {chartMonths.map((month, i) => (
+                            <span key={i}>{month}</span>
+                        ))}
                     </div>
                 </div>
-            </header>
+            </Card>
 
-            <div className="max-w-7xl mx-auto px-6 py-8">
-                {/* Hero Metrics */}
-                <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
-                    <MetricCard
-                        title="Total Loans"
-                        value={summary?.total_loans || 0}
-                        subtitle="Active Loans"
-                        icon={<TrendingUp className="w-6 h-6" />}
-                    />
-                    <MetricCard
-                        title={`Health: ${portfolioHealth}%`}
-                        value={summary?.compliant_covenants || 0}
-                        subtitle="Compliant Covenants"
-                        icon={<CheckCircle2 className="w-6 h-6 text-status-success" />}
-                    />
-                    <MetricCard
-                        title="Active Alerts"
-                        value={summary?.unread_alerts || 0}
-                        subtitle="Require Attention"
-                        icon={<AlertTriangle className="w-6 h-6 text-status-danger" />}
-                        highlight={summary && summary.unread_alerts > 0}
-                    />
-                    <MetricCard
-                        title="At Risk"
-                        value={(summary?.warning_covenants || 0) + (summary?.breach_covenants || 0)}
-                        subtitle="Approaching Breach"
-                        icon={<AlertTriangle className="w-6 h-6 text-status-warning" />}
-                    />
-                </div>
+            {/* Stats Grid */}
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+                <MetricCard
+                    title="Total Covenants"
+                    value={summary?.total_covenants || 0}
+                    subtitle="Across all agreements"
+                    icon={<FileText className="w-4 h-4" />}
+                />
+                <MetricCard
+                    title="Compliant"
+                    value={summary?.compliant_covenants || 0}
+                    subtitle={`${Math.round(portfolioHealth)}% of portfolio`}
+                    trend={{ value: "+5%", isPositive: true }}
+                    icon={<TrendingUp className="w-4 h-4" />}
+                />
+                <MetricCard
+                    title="At Risk"
+                    value={(summary?.warning_covenants || 0) + (summary?.breach_covenants || 0)}
+                    subtitle="Require attention"
+                    trend={{ value: "Critical", isPositive: false }}
+                    icon={<TrendingDown className="w-4 h-4" />}
+                />
+            </div>
 
-                {/* Second Row */}
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
-                    {/* Risk Heatmap */}
-                    <div className="bg-white border border-gray-200 rounded-lg p-6">
-                        <h2 className="text-lg font-semibold text-black mb-4">Risk Heatmap</h2>
-                        <div className="grid grid-cols-4 gap-3">
-                            {heatmap?.slice(0, 12).map((item) => (
+            {/* Bottom Grid */}
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                {/* Portfolio Breakdown */}
+                <Card className="lg:col-span-2">
+                    <div className="flex justify-between items-center mb-4">
+                        <h3 className="text-sm font-semibold text-black">Portfolio Risk Distribution</h3>
+                        <button className="text-xs text-gray-500 hover:text-black transition-colors">View All</button>
+                    </div>
+
+
+                    {loadingHeatmap ? (
+                        <div className="h-48 flex items-center justify-center text-gray-400 text-sm">Loading...</div>
+                    ) : (
+                        <div className="grid grid-cols-8 sm:grid-cols-10 md:grid-cols-12 gap-2">
+                            {heatmap?.slice(0, 48).map((item) => (
                                 <Link
                                     key={item.loan_id}
                                     to={`/loans/${item.loan_id}`}
-                                    className={`aspect-square border rounded-lg p-2 flex flex-col items-center justify-center text-center hover:shadow-md transition-shadow ${item.status === 'breach' ? 'bg-status-danger/10 border-status-danger' :
-                                            item.status === 'warning' ? 'bg-status-warning/10 border-status-warning' :
-                                                'bg-status-success/10 border-status-success'
-                                        }`}
+                                    className="group relative aspect-square"
+                                    title={item.borrower_name || 'Unknown'}
                                 >
-                                    <div className="text-xs font-semibold text-black mb-1">
-                                        {item.borrower_name?.split(' ').map(w => w[0]).join('') || 'NA'}
+                                    <div className={`
+                                        w-full h-full rounded-md border flex items-center justify-center transition-all text-[10px] font-medium
+                                        ${item.status === 'breach' ? 'bg-status-danger-bg border-status-danger-border text-status-danger' :
+                                            item.status === 'warning' ? 'bg-status-warning-bg border-status-warning-border text-status-warning' :
+                                                'bg-status-success-bg border-status-success-border text-status-success'}
+                                        hover:scale-105 hover:shadow-sm hover:z-10
+                                    `}>
+                                        {item.borrower_name?.substring(0, 2).toUpperCase() || 'NA'}
                                     </div>
-                                    <div className="text-xs text-gray-600">{item.covenant_count}</div>
                                 </Link>
                             ))}
                         </div>
-                    </div>
+                    )}
+                </Card>
 
-                    {/* Alerts Widget */}
-                    <div className="bg-white border border-gray-200 rounded-lg p-6">
-                        <div className="flex justify-between items-center mb-4">
-                            <h2 className="text-lg font-semibold text-black">Recent Alerts</h2>
-                            <Link to="/alerts" className="text-sm text-black hover:underline">
-                                View all
-                            </Link>
-                        </div>
-                        <div className="space-y-3 max-h-80 overflow-y-auto">
-                            {alerts?.map((alert) => (
-                                <div key={alert.id} className="flex gap-3 p-3 rounded-lg hover:bg-gray-50">
-                                    <div className={`w-2 h-2 rounded-full mt-1.5 flex-shrink-0 ${getSeverityColor(alert.severity)}`} />
-                                    <div className="flex-1 min-w-0">
-                                        <p className="text-sm font-medium text-black truncate">{alert.title}</p>
-                                        <p className="text-xs text-gray-600 mt-0.5">{alert.message}</p>
-                                        <p className="text-xs text-gray-400 mt-1">{formatRelativeTime(alert.created_at)}</p>
+                {/* Recent Alerts */}
+                <Card>
+                    <div className="flex justify-between items-center mb-4">
+                        <h3 className="text-sm font-semibold text-black">Recent Alerts</h3>
+                        <Link to="/alerts" className="text-xs text-gray-500 hover:text-black transition-colors">
+                            View All
+                        </Link>
+                    </div>
+                    <div className="space-y-3">
+                        {loadingAlerts ? (
+                            <div className="text-sm text-gray-400">Loading...</div>
+                        ) : alerts?.length === 0 ? (
+                            <div className="text-center text-gray-400 text-sm py-8">No alerts</div>
+                        ) : (
+                            alerts?.slice(0, 6).map((alert) => (
+                                <div
+                                    key={alert.id}
+                                    className="pb-3 border-b border-gray-100 last:border-0 last:pb-0"
+                                >
+                                    <div className="flex items-start gap-2">
+                                        <div className={`mt-1 w-1.5 h-1.5 rounded-full shrink-0 ${getSeverityColor(alert.severity).replace('text-', 'bg-')}`} />
+                                        <div className="flex-1 min-w-0">
+                                            <h4 className="text-xs font-medium text-black truncate mb-0.5">
+                                                {alert.title}
+                                            </h4>
+                                            <p className="text-xs text-gray-500 line-clamp-2">
+                                                {alert.message}
+                                            </p>
+                                        </div>
                                     </div>
                                 </div>
-                            ))}
-                            {(!alerts || alerts.length === 0) && (
-                                <p className="text-sm text-gray-500 text-center py-8">No alerts</p>
-                            )}
-                        </div>
+                            ))
+                        )}
                     </div>
-                </div>
-
-                {/* Quick Actions */}
-                <div className="flex gap-4">
-                    <Link
-                        to="/loans"
-                        className="bg-black text-white px-6 py-3 rounded-lg font-semibold hover:bg-gray-800 transition-colors"
-                    >
-                        View All Loans
-                    </Link>
-                </div>
+                </Card>
             </div>
-        </div>
-    );
-}
 
-// Helper Components
-function MetricCard({ title, value, subtitle, icon, highlight }: {
-    title: string;
-    value: number;
-    subtitle: string;
-    icon: React.ReactNode;
-    highlight?: boolean;
-}) {
-    return (
-        <div className={`bg-white border rounded-lg p-6 ${highlight ? 'border-status-danger' : 'border-gray-200'}`}>
-            <div className="flex items-center justify-between mb-2">
-                <span className="text-sm font-medium text-gray-600">{title}</span>
-                {icon}
-            </div>
-            <div className="text-4xl font-extrabold text-black font-tabular mb-1">{value}</div>
-            <div className="text-sm text-gray-500">{subtitle}</div>
-        </div>
+            {/* Upload Modal */}
+            <LoanUploadModal
+                isOpen={isUploadModalOpen}
+                onClose={() => setIsUploadModalOpen(false)}
+                onSuccess={() => {
+                    window.location.reload();
+                }}
+            />
+        </Layout>
     );
 }

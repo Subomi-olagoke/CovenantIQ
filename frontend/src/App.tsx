@@ -8,6 +8,7 @@ import Dashboard from './pages/Dashboard';
 import Loans from './pages/Loans';
 import LoanDetail from './pages/LoanDetail';
 import Alerts from './pages/Alerts';
+import Settings from './pages/Settings';
 import './index.css';
 
 const queryClient = new QueryClient({
@@ -77,6 +78,14 @@ function App() {
               element={
                 <ProtectedRoute>
                   <Alerts />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/settings"
+              element={
+                <ProtectedRoute>
+                  <Settings />
                 </ProtectedRoute>
               }
             />

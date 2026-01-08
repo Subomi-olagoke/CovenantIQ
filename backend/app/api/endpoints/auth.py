@@ -27,7 +27,7 @@ def register(user_data: UserCreate, db: Session = Depends(get_db)):
         hashed_password=hashed_password,
         full_name=user_data.full_name,
         company=user_data.company,
-        role='analyst'  # Default role
+        role=user_data.role or 'analyst'  # Default role
     )
     
     db.add(new_user)

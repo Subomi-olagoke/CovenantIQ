@@ -8,6 +8,7 @@ class UserCreate(BaseModel):
     password: str
     full_name: Optional[str] = None
     company: Optional[str] = None
+    role: Optional[str] = "borrower"
 
 class UserLogin(BaseModel):
     email: EmailStr

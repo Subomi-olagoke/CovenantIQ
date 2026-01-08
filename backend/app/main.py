@@ -3,7 +3,7 @@ from fastapi.middleware.cors import CORSMiddleware
 import logging
 from app.config import settings
 from app.database import engine, Base
-from app.api.endpoints import auth, loans, covenants, alerts, analytics
+from app.api.endpoints import auth, loans, covenants, alerts, analytics, user_settings
 
 # Configure logging
 logging.basicConfig(
@@ -41,6 +41,7 @@ app.include_router(loans.router)
 app.include_router(covenants.router)
 app.include_router(alerts.router)
 app.include_router(analytics.router)
+app.include_router(user_settings.router)
 
 # Health check endpoint
 @app.get("/health")
