@@ -12,7 +12,7 @@ from app.schemas.user_settings import (
     UserActivityItem
 )
 from app.schemas.user import UserResponse
-from app.utils.dependencies import get_current_user
+from app.api.deps import get_current_user
 import logging
 
 logger = logging.getLogger(__name__)
