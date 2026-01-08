@@ -1,6 +1,6 @@
 # CovenantIQ
 
-AI-powered loan covenant monitoring platform for European markets. Built for the LMA Edge Hackathon.
+AI-powered loan covenant monitoring platform for European markets.
 
 ## Overview
 
@@ -168,7 +168,7 @@ npm run lint
 
 ## Contributing
 
-This project was built for the LMA Edge Hackathon. For questions or collaboration inquiries, please open an issue.
+For questions or collaboration inquiries, please open an issue.
 
 ## License
 
@@ -176,7 +176,6 @@ MIT License - See LICENSE file for details
 
 ## Acknowledgments
 
-- LMA Edge Hackathon organizers
 - Anthropic for Claude AI API
 - Open source community
 
