@@ -14,9 +14,9 @@ class Settings(BaseSettings):
     ALGORITHM: str = "HS256"
     ACCESS_TOKEN_EXPIRE_MINUTES: int = 60 * 24 * 7  # 7 days
     
-    # Claude API
-    ANTHROPIC_API_KEY: str
-    CLAUDE_MODEL: str = "claude-sonnet-4-20250514"
+    # OpenAI API
+    OPENAI_API_KEY: str
+    OPENAI_MODEL: str = "gpt-4o"
     
     # File Upload
     UPLOAD_DIR: str = "./uploads"

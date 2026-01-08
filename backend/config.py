@@ -5,8 +5,9 @@ class Settings(BaseSettings):
     # Database
     DATABASE_URL: str
     
-    # Anthropic API
-    ANTHROPIC_API_KEY: str
+    # OpenAI API
+    OPENAI_API_KEY: str
+    OPENAI_MODEL: str = "gpt-4o"
     
     # JWT
     JWT_SECRET_KEY: str

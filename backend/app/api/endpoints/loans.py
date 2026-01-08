@@ -8,7 +8,7 @@ from app.models.covenant import Covenant
 from app.schemas.loan import LoanResponse, CovenantResponse
 from app.api.deps import get_current_user
 from app.services.pdf_service import pdf_service
-from app.services.claude_service import claude_service
+from app.services.openai_service import openai_service
 from app.config import settings
 from typing import List, Optional
 from datetime import date
@@ -40,8 +40,8 @@ async def process_loan_extraction(loan_id: str, file_path: str, db: Session):
             logger.error(f"Failed to extract text from PDF for loan {loan_id}")
             return
         
-        # Extract covenants using Claude
-        extraction_result = await claude_service.extract_covenants_from_agreement(
+        # Extract covenants using OpenAI
+        extraction_result = await openai_service.extract_covenants_from_agreement(
             extracted_text, 
             loan.title
         )
