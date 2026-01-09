@@ -10,9 +10,11 @@ import { Button } from '../components/ui/Button';
 import { Plus, TrendingUp, TrendingDown, FileText } from 'lucide-react';
 import { formatCurrency } from '../lib/utils';
 import { LoanUploadModal } from '../components/loans/LoanUploadModal';
+import CountUp from 'react-countup';
 
 export default function Dashboard() {
     const [isUploadModalOpen, setIsUploadModalOpen] = useState(false);
+    const [selectedPeriod, setSelectedPeriod] = useState('week');
 
     // Fetch portfolio summary
     const { data: summary } = useQuery<PortfolioSummary>({
@@ -50,17 +52,25 @@ export default function Dashboard() {
 
     return (
         <Layout
-            title="Total Portfolio Value"
+            title="Dashboard"
             actions={
                 <div className="flex items-center gap-3">
-                    <select className="px-3 py-2 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-1 focus:ring-black">
-                        <option>Jan 1 '26 - Jan 8 '26</option>
-                        <option>Dec '25</option>
-                        <option>2025</option>
-                        <option>All Time</option>
+                    <select
+                        value={selectedPeriod}
+                        onChange={(e) => setSelectedPeriod(e.target.value)}
+                        className="px-3 py-2 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-black"
+                    >
+                        <option value="week">Jan 1 '26 - Jan 8 '26</option>
+                        <option value="month">Dec '25</option>
+                        <option value="year">2025</option>
+                        <option value="all">All Time</option>
                     </select>
-                    <Button size="sm" onClick={() => setIsUploadModalOpen(true)}>
-                        <Plus className="w-4 h-4 mr-1.5" />
+                    <Button
+                        variant="primary"
+                        size="sm"
+                        onClick={() => setIsUploadModalOpen(true)}
+                    >
+                        <Plus className="w-4 h-4" />
                         Add Loan
                     </Button>
                 </div>
@@ -70,7 +80,12 @@ export default function Dashboard() {
             <div className="mb-8">
                 <div className="flex items-baseline gap-3 mb-2">
                     <h2 className="text-4xl font-bold text-black">
-                        {formatCurrency((summary?.total_loans || 0) * 1000000)}
+                        $<CountUp
+                            end={(summary?.total_loans || 0) * 1000000}
+                            duration={1.5}
+                            separator=","
+                            decimals={0}
+                        />
                     </h2>
                     <span className="text-sm text-gray-500">
                         vs {formatCurrency((summary?.total_loans || 0) * 900000)} last period

@@ -56,30 +56,23 @@ export default function Layout({ children, title, actions, maxWidth = 'normal' }
                         <div className={`mx-auto px-8 ${maxWidthClass}`}>
                             <div className="h-16 flex items-center justify-between">
                                 {/* Title Section */}
-                                <div className="flex items-center gap-6 flex-1">
+                                <div className="flex items-center gap-6">
                                     {title && <h1 className="text-xl font-semibold text-black">{title}</h1>}
                                 </div>
 
-                                {/* Search Trigger */}
-                                <div className="flex-1 max-w-md">
-                                    <button
-                                        onClick={() => setIsSearchOpen(true)}
-                                        className="w-full px-4 py-2 text-sm text-left text-gray-500 bg-gray-50 border border-gray-200 rounded-lg hover:bg-gray-100 hover:border-gray-300 transition-all flex items-center justify-between group"
-                                    >
-                                        <span>Search...</span>
-                                        <kbd className="px-2 py-1 text-xs text-gray-400 bg-white border border-gray-200 rounded group-hover:border-gray-300">
-                                            ⌘K
-                                        </kbd>
-                                    </button>
+                                {/* Right Side: Actions + Cmd+K Hint */}
+                                <div className="flex items-center gap-6">
+                                    {/* Actions (date picker, buttons, etc) */}
+                                    {actions && <div>{actions}</div>}
+
+                                    {/* Cmd+K Hint */}
+                                    <div className="text-xs text-gray-400 flex items-center gap-1.5">
+                                        <span>Press</span>
+                                        <kbd className="px-2 py-1 bg-gray-100 border border-gray-200 rounded text-xs font-mono">⌘K</kbd>
+                                        <span>to search</span>
+                                    </div>
                                 </div>
                             </div>
-
-                            {/* Actions Row */}
-                            {actions && (
-                                <div className="pb-4">
-                                    {actions}
-                                </div>
-                            )}
                         </div>
                     </header>
 
