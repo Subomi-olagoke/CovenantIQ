@@ -11,6 +11,7 @@ import { Plus, TrendingUp, TrendingDown, FileText } from 'lucide-react';
 import { formatCurrency } from '../lib/utils';
 import { LoanUploadModal } from '../components/loans/LoanUploadModal';
 import CountUp from 'react-countup';
+import RiskHeatmap from '../components/dashboard/RiskHeatmap';
 
 export default function Dashboard() {
     const [isUploadModalOpen, setIsUploadModalOpen] = useState(false);
@@ -235,34 +236,15 @@ export default function Dashboard() {
                 <Card className="lg:col-span-2">
                     <div className="flex justify-between items-center mb-4">
                         <h3 className="text-sm font-semibold text-black">Portfolio Risk Distribution</h3>
-                        <button className="text-xs text-gray-500 hover:text-black transition-colors">View All</button>
+                        <Link to="/loans" className="text-xs text-gray-500 hover:text-black transition-colors">
+                            View All
+                        </Link>
                     </div>
 
-
-                    {loadingHeatmap ? (
-                        <div className="h-48 flex items-center justify-center text-gray-400 text-sm">Loading...</div>
-                    ) : (
-                        <div className="grid grid-cols-8 sm:grid-cols-10 md:grid-cols-12 gap-2">
-                            {heatmap?.slice(0, 48).map((item) => (
-                                <Link
-                                    key={item.loan_id}
-                                    to={`/loans/${item.loan_id}`}
-                                    className="group relative aspect-square"
-                                    title={item.borrower_name || 'Unknown'}
-                                >
-                                    <div className={`
-                                        w-full h-full rounded-md border flex items-center justify-center transition-all text-[10px] font-medium
-                                        ${item.status === 'breach' ? 'bg-status-danger-bg border-status-danger-border text-status-danger' :
-                                            item.status === 'warning' ? 'bg-status-warning-bg border-status-warning-border text-status-warning' :
-                                                'bg-status-success-bg border-status-success-border text-status-success'}
-                                        hover:scale-105 hover:shadow-sm hover:z-10
-                                    `}>
-                                        {item.borrower_name?.substring(0, 2).toUpperCase() || 'NA'}
-                                    </div>
-                                </Link>
-                            ))}
-                        </div>
-                    )}
+                    <RiskHeatmap
+                        loans={heatmap || []}
+                        isLoading={loadingHeatmap}
+                    />
                 </Card>
 
                 {/* Recent Alerts */}
