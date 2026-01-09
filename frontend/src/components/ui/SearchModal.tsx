@@ -75,7 +75,7 @@ export function SearchModal({ isOpen, onClose }: SearchModalProps) {
             />
 
             {/* Modal */}
-            <div className={`relative w-full max-w-2xl bg-white rounded-xl shadow-2xl border border-gray-200 overflow-hidden transition-all duration-200 ${isOpen ? 'scale-100 opacity-100 translate-y-0' : 'scale-95 opacity-0 -translate-y-2'
+            <div className={`relative w-full max-w-2xl bg-white rounded-2xl shadow-2xl border border-gray-200 overflow-hidden transition-all duration-200 ${isOpen ? 'scale-100 opacity-100 translate-y-0' : 'scale-95 opacity-0 -translate-y-2'
                 }`}>
                 {/* Search Input */}
                 <div className="flex items-center gap-3 px-4 py-4 border-b border-gray-200">
