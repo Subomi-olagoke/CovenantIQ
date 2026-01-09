@@ -24,7 +24,7 @@ export default function Loans() {
     return (
         <Layout
             title="Loans"
-            maxWidth="default"
+            maxWidth="normal"
             actions={
                 <div className="flex gap-3">
                     <Button variant="secondary" className="hidden sm:flex">

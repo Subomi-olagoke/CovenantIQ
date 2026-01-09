@@ -35,6 +35,10 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+# Add GZip compression for responses
+from fastapi.middleware.gzip import GZipMiddleware
+app.add_middleware(GZipMiddleware, minimum_size=1000)
+
 # Include routers
 app.include_router(auth.router)
 app.include_router(loans.router)

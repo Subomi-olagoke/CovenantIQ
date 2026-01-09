@@ -144,11 +144,13 @@ async def upload_loan_agreement(
     return LoanResponse.from_orm(loan)
 
 @router.get("/", response_model=List[LoanResponse])
-def get_all_loans(
+def list_loans(
+    skip: int = 0,
+    limit: int = 50,
     current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db)
 ):
-    """Get all loans for current user with covenant counts"""
+    """List all loans for the current user with pagination"""
     loans = db.query(
         LoanAgreement,
         func.count(Covenant.id).label('covenant_count')
