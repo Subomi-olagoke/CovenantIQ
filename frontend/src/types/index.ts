@@ -93,3 +93,22 @@ export interface PredictionResult {
     current_trajectory: string;
     predicted_value_at_breach: number;
 }
+
+export interface PortfolioValueResponse {
+    current_value: number;
+    previous_value: number;
+    change_percentage: number;
+    change_amount: number;
+}
+
+export interface PortfolioTrendsResponse {
+    months: string[];
+    current_period: number[];
+    previous_period: number[];
+}
+
+export interface CovenantTrendsResponse {
+    compliant_change: number;
+    warning_change: number;
+    breach_change: number;
+}

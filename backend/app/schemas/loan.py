@@ -102,3 +102,23 @@ class RiskHeatmapItem(BaseModel):
     status: str  # compliant, warning, breach
     covenant_count: int
     critical_count: int
+
+class PortfolioValueResponse(BaseModel):
+    current_value: float
+    previous_value: float
+    change_percentage: float
+    change_amount: float
+
+class TrendDataPoint(BaseModel):
+    month: str
+    value: float
+
+class PortfolioTrendsResponse(BaseModel):
+    months: List[str]
+    current_period: List[float]
+    previous_period: List[float]
+
+class CovenantTrendsResponse(BaseModel):
+    compliant_change: float
+    warning_change: float
+    breach_change: float

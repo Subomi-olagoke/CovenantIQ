@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { Link } from 'react-router-dom';
 import api from '../lib/api';
-import type { PortfolioSummary, Alert, RiskHeatmapItem } from '../types';
+import type { PortfolioSummary, Alert, RiskHeatmapItem, PortfolioValueResponse, PortfolioTrendsResponse, CovenantTrendsResponse } from '../types';
 import { getSeverityColor } from '../lib/dashboard-utils';
 import Layout from '../components/layout/Layout';
 import { MetricCard, Card } from '../components/ui/Card';
@@ -43,12 +43,34 @@ export default function Dashboard() {
         },
     });
 
-    const portfolioHealth = summary ? (summary.compliant_covenants / summary.total_covenants) * 100 : 0;
+    // Fetch portfolio value
+    const { data: portfolioValue } = useQuery<PortfolioValueResponse>({
+        queryKey: ['portfolio-value'],
+        queryFn: async () => {
+            const res = await api.get('/api/analytics/portfolio-value');
+            return res.data;
+        },
+    });
 
-    // Mock chart data - replace with real data
-    const chartMonths = ['Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec', 'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul'];
-    const currentData = [120, 150, 380, 420, 350, 280, 480, 420, 520, 680, 750, 880, 960];
-    const lastData = [80, 100, 220, 280, 240, 180, 320, 280, 360, 480, 520, 620, 680];
+    // Fetch portfolio trends
+    const { data: portfolioTrends } = useQuery<PortfolioTrendsResponse>({
+        queryKey: ['portfolio-trends'],
+        queryFn: async () => {
+            const res = await api.get('/api/analytics/portfolio-trends');
+            return res.data;
+        },
+    });
+
+    // Fetch covenant trends
+    const { data: covenantTrends } = useQuery<CovenantTrendsResponse>({
+        queryKey: ['covenant-trends'],
+        queryFn: async () => {
+            const res = await api.get('/api/analytics/covenant-trends');
+            return res.data;
+        },
+    });
+
+    const portfolioHealth = summary ? (summary.compliant_covenants / summary.total_covenants) * 100 : 0;
 
     return (
         <Layout
@@ -81,14 +103,14 @@ export default function Dashboard() {
                 <div className="flex items-baseline gap-3 mb-2">
                     <h2 className="text-4xl font-bold text-black">
                         $<CountUp
-                            end={(summary?.total_loans || 0) * 1000000}
+                            end={portfolioValue?.current_value || 0}
                             duration={1.5}
                             separator=","
                             decimals={0}
                         />
                     </h2>
                     <span className="text-sm text-gray-500">
-                        vs {formatCurrency((summary?.total_loans || 0) * 900000)} last period
+                        vs {formatCurrency(portfolioValue?.previous_value || 0)} last period
                     </span>
                 </div>
                 <div className="flex items-center gap-2 text-sm">
@@ -107,48 +129,72 @@ export default function Dashboard() {
             <Card className="mb-6 p-0 overflow-hidden">
                 <div className="p-6 pb-0">
                     <div className="h-64 relative">
-                        {/* Y-axis labels */}
-                        <div className="absolute left-0 top-0 bottom-8 flex flex-col justify-between text-xs text-gray-400">
-                            <span>6000</span>
-                            <span>4500</span>
-                            <span>3000</span>
-                            <span>1500</span>
-                            <span>0</span>
-                        </div>
+                        {portfolioTrends ? (
+                            <>
+                                {/* Y-axis labels - dynamically calculate based on max value */}
+                                <div className="absolute left-0 top-0 bottom-8 flex flex-col justify-between text-xs text-gray-400">
+                                    {(() => {
+                                        const maxVal = Math.max(...portfolioTrends.current_period, ...portfolioTrends.previous_period);
+                                        const step = Math.ceil(maxVal / 4);
+                                        return [4, 3, 2, 1, 0].map(i => (
+                                            <span key={i}>{(step * i).toLocaleString()}</span>
+                                        ));
+                                    })()}
+                                </div>
 
-                        {/* Chart area */}
-                        <div className="ml-12 h-full relative">
-                            <svg className="w-full h-full" viewBox="0 0 800 240" preserveAspectRatio="none">
-                                {/* Grid lines */}
-                                <line x1="0" y1="0" x2="800" y2="0" stroke="#E5E5E5" strokeWidth="1" />
-                                <line x1="0" y1="60" x2="800" y2="60" stroke="#E5E5E5" strokeWidth="1" />
-                                <line x1="0" y1="120" x2="800" y2="120" stroke="#E5E5E5" strokeWidth="1" />
-                                <line x1="0" y1="180" x2="800" y2="180" stroke="#E5E5E5" strokeWidth="1" />
+                                {/* Chart area */}
+                                <div className="ml-12 h-full relative">
+                                    <svg className="w-full h-full" viewBox="0 0 800 240" preserveAspectRatio="none">
+                                        {/* Grid lines */}
+                                        <line x1="0" y1="0" x2="800" y2="0" stroke="#E5E5E5" strokeWidth="1" />
+                                        <line x1="0" y1="60" x2="800" y2="60" stroke="#E5E5E5" strokeWidth="1" />
+                                        <line x1="0" y1="120" x2="800" y2="120" stroke="#E5E5E5" strokeWidth="1" />
+                                        <line x1="0" y1="180" x2="800" y2="180" stroke="#E5E5E5" strokeWidth="1" />
 
-                                {/* Last period line (gray) */}
-                                <polyline
-                                    points={lastData.map((val, i) => `${(i / (lastData.length - 1)) * 800},${240 - (val / 1000) * 240}`).join(' ')}
-                                    fill="none"
-                                    stroke="#D4D4D4"
-                                    strokeWidth="2"
-                                />
+                                        {/* Last period line (gray) */}
+                                        {(() => {
+                                            const maxVal = Math.max(...portfolioTrends.current_period, ...portfolioTrends.previous_period);
+                                            return (
+                                                <polyline
+                                                    points={portfolioTrends.previous_period.map((val, i) =>
+                                                        `${(i / (portfolioTrends.previous_period.length - 1)) * 800},${240 - (val / maxVal) * 240}`
+                                                    ).join(' ')}
+                                                    fill="none"
+                                                    stroke="#D4D4D4"
+                                                    strokeWidth="2"
+                                                />
+                                            );
+                                        })()}
 
-                                {/* Current period line (black) */}
-                                <polyline
-                                    points={currentData.map((val, i) => `${(i / (currentData.length - 1)) * 800},${240 - (val / 1000) * 240}`).join(' ')}
-                                    fill="none"
-                                    stroke="#000000"
-                                    strokeWidth="2.5"
-                                />
-                            </svg>
-                        </div>
-                    </div>
+                                        {/* Current period line (black) */}
+                                        {(() => {
+                                            const maxVal = Math.max(...portfolioTrends.current_period, ...portfolioTrends.previous_period);
+                                            return (
+                                                <polyline
+                                                    points={portfolioTrends.current_period.map((val, i) =>
+                                                        `${(i / (portfolioTrends.current_period.length - 1)) * 800},${240 - (val / maxVal) * 240}`
+                                                    ).join(' ')}
+                                                    fill="none"
+                                                    stroke="#000000"
+                                                    strokeWidth="2.5"
+                                                />
+                                            );
+                                        })()}
+                                    </svg>
+                                </div>
 
-                    {/* X-axis labels */}
-                    <div className="flex justify-between text-xs text-gray-400 mt-2 ml-12">
-                        {chartMonths.map((month, i) => (
-                            <span key={i}>{month}</span>
-                        ))}
+                                {/* X-axis labels */}
+                                <div className="flex justify-between text-xs text-gray-400 mt-2 ml-12">
+                                    {portfolioTrends.months.map((month, i) => (
+                                        <span key={i}>{month}</span>
+                                    ))}
+                                </div>
+                            </>
+                        ) : (
+                            <div className="h-full flex items-center justify-center text-gray-400 text-sm">
+                                Loading chart data...
+                            </div>
+                        )}
                     </div>
                 </div>
             </Card>
@@ -165,14 +211,20 @@ export default function Dashboard() {
                     title="Compliant"
                     value={summary?.compliant_covenants || 0}
                     subtitle={`${Math.round(portfolioHealth)}% of portfolio`}
-                    trend={{ value: "+5%", isPositive: true }}
+                    trend={covenantTrends ? {
+                        value: `${covenantTrends.compliant_change > 0 ? '+' : ''}${covenantTrends.compliant_change.toFixed(1)}%`,
+                        isPositive: covenantTrends.compliant_change >= 0
+                    } : undefined}
                     icon={<TrendingUp className="w-4 h-4" />}
                 />
                 <MetricCard
                     title="At Risk"
                     value={(summary?.warning_covenants || 0) + (summary?.breach_covenants || 0)}
                     subtitle="Require attention"
-                    trend={{ value: "Critical", isPositive: false }}
+                    trend={covenantTrends ? {
+                        value: `${covenantTrends.breach_change > 0 ? '+' : ''}${covenantTrends.breach_change.toFixed(1)}%`,
+                        isPositive: covenantTrends.breach_change <= 0
+                    } : undefined}
                     icon={<TrendingDown className="w-4 h-4" />}
                 />
             </div>
